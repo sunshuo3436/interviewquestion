@@ -47,11 +47,9 @@ func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
 	// 定义缓冲区和数据缓冲区
-	var dataBuffer bytes.Buffer
-	buffer := make([]byte, 1024)
-
 	for {
 		// 从连接中读取数据到缓冲区
+		buffer := make([]byte, 1024)
 		n, err := conn.Read(buffer)
 		if err != nil {
 			if err != io.EOF {
@@ -59,9 +57,12 @@ func handleConnection(conn net.Conn) {
 			}
 			return
 		}
-
+		//
+		//fmt.Printf("buffer Bytes: %X\n, n %d\n", buffer, n)
 		// 将读取到的数据写入数据缓冲区
+		var dataBuffer bytes.Buffer
 		dataBuffer.Write(buffer[:n])
+		fmt.Printf("dataBuffer length %d\n", dataBuffer.Len())
 
 		// 处理数据缓冲区中的数据
 		for {
@@ -84,16 +85,21 @@ func handleConnection(conn net.Conn) {
 			length := binary.BigEndian.Uint16(lengthBytes)
 
 			// 计算完整报文的总长度
-			totalLen := int(HeaderLen + length)
+			totalLen := int(StartBytesLen + LengthBytesLen + length)
+			fmt.Printf("dataBuffer length %d, totalLen %d", dataBuffer.Len(), totalLen)
 			// 检查是否有足够的数据来解析完整报文
 			if dataBuffer.Len() < totalLen {
-				break
+				return
 			}
 
 			// 提取完整报文
 			message := dataBuffer.Next(totalLen)
-			// 打印报文内容
+			// 打印原始消息的十六进制表示
+			fmt.Printf("Raw Message: %X\n", message)
+			fmt.Println("----- Parsed Message -----")
+			// 打印解析后的消息
 			printMessage(message)
+			fmt.Println("--------------------------")
 		}
 	}
 }
@@ -114,5 +120,4 @@ func printMessage(message []byte) {
 	fmt.Printf("Device ID: %s\n", string(deviceID))
 	fmt.Printf("Socket Number: %d\n", socketNum)
 	fmt.Printf("Data Unit: %X\n", dataUnit)
-	fmt.Println("-----")
 }
