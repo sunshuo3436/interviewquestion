@@ -112,7 +112,7 @@ func printMessage(message []byte) {
 	afn := message[StartBytesLen+LengthBytesLen]
 	deviceID := message[StartBytesLen+LengthBytesLen+AFNBytesLen : StartBytesLen+LengthBytesLen+AFNBytesLen+DeviceIDLen]
 	socketNum := message[StartBytesLen+LengthBytesLen+AFNBytesLen+DeviceIDLen]
-	dataUnit := message[HeaderLen : HeaderLen+length]
+	dataUnit := message[HeaderLen : HeaderLen+int(length)]
 
 	fmt.Printf("Start Bytes: %X\n", startBytes)
 	fmt.Printf("Length: %d\n", length)
