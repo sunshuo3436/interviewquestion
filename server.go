@@ -8,6 +8,16 @@ import (
 	"net"
 )
 
+// Frame 结构体定义
+type Frame struct {
+	StartBytes []byte
+	Length     uint16
+	AFN        byte
+	DeviceID   string
+	SocketNum  byte
+	DataUnit   []byte
+}
+
 const (
 	// 定义报文头部固定字段长度
 	StartBytesLen  = 2
@@ -110,9 +120,21 @@ func printMessage(message []byte) {
 	lengthBytes := message[StartBytesLen : StartBytesLen+LengthBytesLen]
 	length := binary.BigEndian.Uint16(lengthBytes)
 	afn := message[StartBytesLen+LengthBytesLen]
-	deviceID := message[StartBytesLen+LengthBytesLen+AFNBytesLen : StartBytesLen+LengthBytesLen+AFNBytesLen+DeviceIDLen]
-	socketNum := message[StartBytesLen+LengthBytesLen+AFNBytesLen+DeviceIDLen]
-	dataUnit := message[HeaderLen : HeaderLen+int(length)]
+
+	// 计算 DeviceID 的起始和结束位置
+	deviceIDStart := StartBytesLen + LengthBytesLen + AFNBytesLen
+	deviceIDEnd := deviceIDStart + DeviceIDLen
+	deviceID := message[deviceIDStart:deviceIDEnd]
+
+	socketNum := message[deviceIDEnd]
+
+	// 计算 DataUnit 的起始位置和长度
+	dataUnitStart := HeaderLen
+	dataUnitEnd := HeaderLen + int(length) - 1
+	if dataUnitEnd > len(message) {
+		dataUnitEnd = len(message)
+	}
+	dataUnit := message[dataUnitStart:dataUnitEnd]
 
 	fmt.Printf("Start Bytes: %X\n", startBytes)
 	fmt.Printf("Length: %d\n", length)
