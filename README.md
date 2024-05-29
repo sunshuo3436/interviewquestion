@@ -72,3 +72,47 @@ Due to the mistake in using Postman, I opted to test server.go using the client.
 I've recognized the significance of code readability for comprehension and maintenance, particularly with fields like Device ID, which utilize ASCII encoding. To ensure code clarity, I'll incorporate appropriate comments and strive for clear and concise code writing.
 
 
+
+
+# Third Revision
+
+## Handling Sticky and Fragmented Messages
+
+### Key Points:
+1. **Setting `dataUnitStart` and `dataUnitEnd` Calculation**: Ensure the `DataUnit` start and end positions are calculated correctly to avoid extra data.
+2. **Boundary Check**: Ensure `dataUnitEnd` does not exceed the actual message length to prevent index out of range errors.
+
+### `printMessage` Function
+The `printMessage` function is responsible for extracting and printing the different parts of the message. Here's the updated function:
+
+```go
+func printMessage(message []byte) {
+    // Extract and print different parts of the message
+    startBytes := message[:StartBytesLen]
+    lengthBytes := message[StartBytesLen : StartBytesLen+LengthBytesLen]
+    length := binary.BigEndian.Uint16(lengthBytes)
+    afn := message[StartBytesLen+LengthBytesLen]
+
+    // Calculate the start and end positions of DeviceID
+    deviceIDStart := StartBytesLen + LengthBytesLen + AFNBytesLen
+    deviceIDEnd := deviceIDStart + DeviceIDLen
+    deviceID := message[deviceIDStart:deviceIDEnd]
+
+    socketNum := message[deviceIDEnd]
+
+    // Calculate the start position and length of DataUnit
+    dataUnitStart := HeaderLen
+    dataUnitEnd := HeaderLen + int(length) - 1
+    if dataUnitEnd > len(message) {
+        dataUnitEnd = len(message)
+    }
+    dataUnit := message[dataUnitStart:dataUnitEnd]
+
+    fmt.Printf("Start Bytes: %X\n", startBytes)
+    fmt.Printf("Length: %d\n", length)
+    fmt.Printf("AFN: %X\n", afn)
+    fmt.Printf("Device ID: %s\n", string(deviceID))
+    fmt.Printf("Socket Number: %d\n", socketNum)
+    fmt.Printf("Data Unit: %X\n", dataUnit)
+}
+
